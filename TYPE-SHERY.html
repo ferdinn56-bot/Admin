@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FindIt School - Admin</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#f3f6fb;color:#172033}
+.auth{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;background:linear-gradient(145deg,#172554,#315efb)}
+.auth-box{width:100%;max-width:390px;background:white;padding:25px;border-radius:25px;box-shadow:0 15px 40px #0004}
+.logo{width:80px;height:80px;margin:auto;background:#eef2ff;border-radius:22px;display:flex;align-items:center;justify-content:center;font-size:45px}
+h1{text-align:center;margin:15px 0 5px}.subtitle{text-align:center;color:#777;margin-bottom:20px}
+label{display:block;font-weight:bold;margin:12px 0 6px}input{width:100%;padding:13px;border:1px solid #ddd;border-radius:11px;font-size:15px;outline:none}
+.password{position:relative}.password input{padding-right:50px}.eye{position:absolute;right:10px;top:8px;background:white;border:0;font-size:20px;padding:5px}
+.btn{width:100%;padding:14px;border:0;border-radius:12px;font-size:15px;font-weight:bold;cursor:pointer;margin-top:15px}.primary{background:#315efb;color:white}
+.error{color:#d22;font-size:13px;margin-top:8px;text-align:center}.info{background:#f1f4ff;padding:12px;border-radius:12px;margin-top:18px;font-size:12px;color:#555}
+#dashboard{display:none}header{background:#315efb;color:white;padding:20px;border-radius:0 0 25px 25px}
+.header-top{display:flex;justify-content:space-between;align-items:center;gap:10px}.header-top h2{margin:0}.logout{background:white;color:#315efb;border:0;padding:9px 12px;border-radius:10px;font-weight:bold}
+header p{margin:7px 0 0;opacity:.9}.container{padding:15px;max-width:700px;margin:auto}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:15px 0}.stat{background:white;padding:17px;border-radius:16px;box-shadow:0 3px 10px #0001}.stat-icon{font-size:25px}.stat h2{margin:5px 0}
+.filter{display:flex;gap:8px;margin-bottom:15px}.filter button{flex:1;padding:10px;border:0;border-radius:10px;background:white;font-weight:bold;color:#667085}.filter button.active{background:#315efb;color:white}
+.report{background:white;border-radius:18px;padding:14px;margin-bottom:15px;box-shadow:0 3px 12px #0001}.report img{width:100%;max-height:220px;object-fit:cover;border-radius:12px;margin-bottom:10px}
+.report h3{margin:5px 0}.report p{margin:6px 0;font-size:13px;color:#667085}.badge{display:inline-block;padding:6px 10px;border-radius:20px;font-size:11px;font-weight:bold}
+.lost{background:#ffe1e1;color:#d22}.found{background:#dcfce7;color:#16803c}.action{width:100%;border:0;padding:12px;border-radius:10px;margin-top:8px;font-weight:bold;cursor:pointer}
+.action-found{background:#16a34a;color:white}.action-delete{background:#fee2e2;color:#dc2626}.action-lost{background:#fff3cd;color:#856404}.detail{background:#eef2ff;color:#315efb}
+.empty{text-align:center;padding:35px;color:#888;background:white;border-radius:15px}
+.modal{display:none;position:fixed;inset:0;background:#0008;align-items:flex-end;justify-content:center;z-index:20}.modal-box{background:white;width:100%;max-width:600px;padding:22px;border-radius:25px 25px 0 0;max-height:85vh;overflow:auto}
+.close{float:right;border:0;background:#eee;width:35px;height:35px;border-radius:50%;font-size:18px}.detail-img{width:100%;max-height:250px;object-fit:contain;border-radius:12px;background:#eee}
+</style>
+</head>
+<body>
+
+<div class="auth" id="auth">
+<div class="auth-box">
+<div class="logo">🛡️</div>
+<h1>FindIt School</h1>
+<p class="subtitle">Login Admin</p>
+<label>Username Admin</label>
+<input id="loginUser" type="text" placeholder="Masukkan username admin" autocomplete="off">
+<label>Password Admin</label>
+<div class="password">
+<input id="loginPass" type="password" placeholder="Masukkan password admin">
+<button class="eye" type="button" onclick="showPassword()">👁️</button>
+</div>
+<button class="btn primary" onclick="login()">🔐 MASUK ADMIN</button>
+<div class="info">🔒 Halaman pengelola.<br>Login menggunakan akun admin tersimpan di Firestore.</div>
+<div class="error" id="error"></div>
+</div>
+</div>
+
+<div id="dashboard">
+<header>
+<div class="header-top">
+<h2>👨‍💼 Dashboard Admin</h2>
+<button class="logout" onclick="logout()">Keluar</button>
+</div>
+<p>Selamat datang, <b id="adminName">adeef</b> 👋</p>
+</header>
+<div class="container">
+<div class="stats">
+<div class="stat"><div class="stat-icon">📦</div><div>Total Laporan</div><h2 id="total">0</h2></div>
+<div class="stat"><div class="stat-icon">🔴</div><div>Barang Hilang</div><h2 id="lostTotal">0</h2></div>
+<div class="stat"><div class="stat-icon">🟢</div><div>Ditemukan</div><h2 id="foundTotal">0</h2></div>
+<div class="stat"><div class="stat-icon">📅</div><div>Hari Ini</div><h2 id="todayTotal">0</h2></div>
+</div>
+<div class="filter">
+<button id="allBtn" class="active" onclick="filterReports('semua')">Semua</button>
+<button id="lostBtn" onclick="filterReports('hilang')">🔴 Hilang</button>
+<button id="foundBtn" onclick="filterReports('ditemukan')">🟢 Ditemukan</button>
+</div>
+<h3>📋 Daftar Laporan Siswa</h3>
+<div id="reports"></div>
+</div>
+</div>
+
+<div class="modal" id="detailModal">
+<div class="modal-box">
+<button class="close" onclick="closeDetail()">✕</button>
+<h2>📋 Detail Laporan</h2>
+<div id="detailContent"></div>
+</div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.18.0/firebase-app.js";
+import { 
+ getAuth, 
+ signInWithEmailAndPassword, 
+ signOut, 
+ onAuthStateChanged 
+} from "https://www.gstatic.com/firebasejs/12.18.0/firebase-auth.js";
+
+const PROJECT_ID = "website-laporan-air-sekolah";
+const FS_BASE = `https://firestore.googleapis.com/v1/projects/${PROJECT_ID}/databases/(default)/documents`;
+
+const firebaseConfig = {
+ apiKey: "AIzaSyAiTIZMdmDHi9amq3pKrLcfbn8T20QS2lM",
+ authDomain: "website-laporan-air-sekolah.firebaseapp.com",
+ projectId: "website-laporan-air-sekolah",
+ messagingSenderId: "268556479309",
+ appId: "1:268556479309:web:33392a26d144d643d2a504",
+ measurementId: "G-H4KVWBS9TB"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+
+// ======================================================================
+// Firestore lewat REST API langsung (fetch biasa), BUKAN lewat Firebase
+// SDK. Ini dipakai karena mekanisme "Write/Listen Stream" bawaan SDK
+// Firestore gagal/menggantung terus di perangkat ini, sedangkan fetch()
+// biasa ke Firestore REST API terbukti lancar (sudah dites).
+// ======================================================================
+
+function withTimeout(promise, ms, label){
+ return Promise.race([
+  promise,
+  new Promise((_, reject) => setTimeout(() => reject(new Error(`${label} - waktu habis (periksa koneksi internet)`)), ms))
+ ]);
+}
+
+function toFirestoreValue(v){
+ if(v === null || v === undefined) return { nullValue: null };
+ if(v instanceof Date) return { timestampValue: v.toISOString() };
+ if(typeof v === "number") return Number.isInteger(v) ? { integerValue: String(v) } : { doubleValue: v };
+ if(typeof v === "boolean") return { booleanValue: v };
+ return { stringValue: String(v) };
+}
+function toFirestoreFields(obj){
+ const fields = {};
+ for(const k in obj) fields[k] = toFirestoreValue(obj[k]);
+ return fields;
+}
+function fromFirestoreValue(v){
+ if(!v) return null;
+ if("stringValue" in v) return v.stringValue;
+ if("integerValue" in v) return parseInt(v.integerValue, 10);
+ if("doubleValue" in v) return v.doubleValue;
+ if("booleanValue" in v) return v.booleanValue;
+ if("timestampValue" in v) return v.timestampValue;
+ if("nullValue" in v) return null;
+ if("mapValue" in v) return fromFirestoreFields(v.mapValue.fields || {});
+ if("arrayValue" in v) return (v.arrayValue.values || []).map(fromFirestoreValue);
+ return null;
+}
+function fromFirestoreFields(fields){
+ const obj = {};
+ for(const k in (fields||{})) obj[k] = fromFirestoreValue(fields[k]);
+ return obj;
+}
+function fromFirestoreDoc(docJson){
+ const id = docJson.name.split("/").pop();
+ return { id, ...fromFirestoreFields(docJson.fields) };
+}
+async function fsError(res){
+ let msg = "HTTP " + res.status;
+ try { const j = await res.json(); if(j.error && j.error.message) msg = j.error.message; } catch(e){}
+ return new Error(msg);
+}
+async function restListDocs(collectionPath){
+ const res = await withTimeout(fetch(`${FS_BASE}/${collectionPath}?pageSize=300`), 15000, "Ambil laporan");
+ if(!res.ok) throw await fsError(res);
+ const json = await res.json();
+ return (json.documents || []).map(fromFirestoreDoc);
+}
+// Update sebagian field saja (merge), pakai updateMask supaya field lain tidak ikut terhapus.
+async function restUpdateDoc(path, dataObj){
+ const mask = Object.keys(dataObj).map(k => `updateMask.fieldPaths=${encodeURIComponent(k)}`).join("&");
+ const res = await withTimeout(fetch(`${FS_BASE}/${path}?${mask}`, {
+  method: "PATCH",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ fields: toFirestoreFields(dataObj) })
+ }), 15000, "Update status");
+ if(!res.ok) throw await fsError(res);
+ return fromFirestoreDoc(await res.json());
+}
+async function restDeleteDoc(path){
+ const res = await withTimeout(fetch(`${FS_BASE}/${path}`, { method: "DELETE" }), 15000, "Hapus laporan");
+ if(!res.ok) throw await fsError(res);
+}
+
+const ADMIN_USER = "adeef";
+const ADMIN_PASS = "22312";
+let currentFilter = "semua";
+let reports = [];
+let stopReports = null;
+
+function error(text){ document.getElementById("error").innerText = text; }
+function escapeHTML(text){
+ return String(text||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#039;");
+}
+
+window.showPassword = function(){
+ const input = document.getElementById("loginPass"), button = document.querySelector(".eye");
+ if(input.type === "password"){ input.type = "text"; button.innerText = "🙈"; }
+ else { input.type = "password"; button.innerText = "👁️"; }
+};
+
+window.login = async function(){
+ const u = document.getElementById("loginUser").value.trim().toLowerCase();
+ const p = document.getElementById("loginPass").value;
+
+ if(u === ADMIN_USER && p === ADMIN_PASS){
+  sessionStorage.setItem("finditAdmin", "true");
+  document.getElementById("auth").style.display = "none";
+  document.getElementById("dashboard").style.display = "block";
+  startAdminReports();
+ } else {
+  error("❌ Username atau password admin salah.");
+ }
+};
+
+window.logout = function(){
+ if(stopReports) clearInterval(stopReports);
+ stopReports = null;
+ sessionStorage.removeItem("finditAdmin");
+ document.getElementById("dashboard").style.display = "none";
+ document.getElementById("auth").style.display = "flex";
+ document.getElementById("loginUser").value = "";
+ document.getElementById("loginPass").value = "";
+};
+
+if(sessionStorage.getItem("finditAdmin") === "true"){
+ document.getElementById("auth").style.display = "none";
+ document.getElementById("dashboard").style.display = "block";
+ startAdminReports();
+}
+
+async function loadAdminReports(){
+ try {
+  const data = await restListDocs("reports");
+  data.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+  reports = data;
+  renderAdmin();
+ } catch(e) {
+  console.error(e);
+  document.getElementById("reports").innerHTML = `<div class="empty">❌ Gagal memuat data dari Firestore.</div>`;
+ }
+}
+
+// Firestore SDK biasanya pakai koneksi real-time (onSnapshot). Karena itu
+// yang bermasalah di perangkat ini, sebagai gantinya laporan di-refresh
+// otomatis tiap beberapa detik (polling) lewat REST API.
+function startAdminReports(){
+ if(stopReports) clearInterval(stopReports);
+ loadAdminReports();
+ stopReports = setInterval(loadAdminReports, 4000);
+}
+
+function renderAdmin(){
+ const data = reports;
+ document.getElementById("total").innerText = data.length;
+ document.getElementById("lostTotal").innerText = data.filter(x => x.type === "hilang").length;
+ document.getElementById("foundTotal").innerText = data.filter(x => x.type === "ditemukan").length;
+
+ const today = new Date().toLocaleDateString("id-ID");
+ document.getElementById("todayTotal").innerText = data.filter(x => x.dateText && x.dateText.includes(today)).length;
+ renderReports();
+}
+
+window.filterReports = function(type){
+ currentFilter = type;
+ document.querySelectorAll(".filter button").forEach(x => x.classList.remove("active"));
+ if(type === "semua") document.getElementById("allBtn").classList.add("active");
+ if(type === "hilang") document.getElementById("lostBtn").classList.add("active");
+ if(type === "ditemukan") document.getElementById("foundBtn").classList.add("active");
+ renderReports();
+};
+
+function renderReports(){
+ let data = reports;
+ if(currentFilter !== "semua") data = data.filter(x => x.type === currentFilter);
+
+ const box = document.getElementById("reports");
+ if(!data.length){ box.innerHTML = '<div class="empty">📭 Tidak ada laporan.</div>'; return; }
+
+ box.innerHTML = data.map(reportCard).join("");
+}
+
+function reportCard(x){
+ return `<div class="report">
+ ${x.photoUrl ? `<img src="${escapeHTML(x.photoUrl)}" alt="Foto barang">` : `<div style="text-align:center;font-size:60px;padding:20px;background:#f1f3f7;border-radius:12px">📦</div>`}
+ <h3>${escapeHTML(x.name)}</h3>
+ <span class="badge ${x.type === "hilang" ? "lost" : "found"}">${x.type === "hilang" ? "🔴 BARANG HILANG" : "🟢 BARANG DITEMUKAN"}</span>
+ <p>📂 <b>Kategori:</b> ${escapeHTML(x.category)}</p>
+ <p>📍 <b>Lokasi:</b> ${escapeHTML(x.location)}</p>
+ <p>📝 ${escapeHTML(x.desc)}</p>
+ <p>👤 <b>Pelapor:</b> ${escapeHTML(x.reporter || "Siswa")}</p>
+ <p>📞 <b>Kontak:</b> ${escapeHTML(x.phoneNumber || "-")}</p>
+ <p>🗓️ ${escapeHTML(x.dateText || "-")}</p>
+ <button class="action detail" onclick="detail('${x.id}')">🔎 LIHAT DETAIL</button>
+ ${x.type === "hilang"
+ ? `<button class="action action-found" onclick="setFound('${x.id}')">✅ KONFIRMASI BARANG DITEMUKAN</button>`
+ : `<button class="action action-lost" onclick="setLost('${x.id}')">↩️ KEMBALIKAN KE STATUS HILANG</button>`}
+ <button class="action action-delete" onclick="deleteReport('${x.id}')">🗑️ HAPUS LAPORAN</button>
+ </div>`;
+}
+
+window.detail = function(id){
+ const x = reports.find(item => item.id === id); if(!x) return;
+ document.getElementById("detailContent").innerHTML = `
+ ${x.photoUrl ? `<img class="detail-img" src="${escapeHTML(x.photoUrl)}" alt="Foto barang">` : ""}
+ <h2>${escapeHTML(x.name)}</h2>
+ <p><b>Status:</b> ${x.type === "hilang" ? "🔴 Barang Hilang" : "🟢 Barang Ditemukan"}</p>
+ <p><b>Kategori:</b> ${escapeHTML(x.category)}</p>
+ <p><b>Lokasi:</b> ${escapeHTML(x.location)}</p>
+ <p><b>Keterangan:</b><br>${escapeHTML(x.desc)}</p>
+ <p><b>Pelapor:</b> ${escapeHTML(x.reporter || "Siswa")}</p>
+ <p><b>Kontak:</b> ${escapeHTML(x.phoneNumber || "-")}</p>
+ ${x.phoneNumber ? `<p>
+ <a href="tel:${escapeHTML(x.phoneNumber)}" style="color:#315efb;font-weight:bold;margin-right:15px">📞 Telepon</a>
+ <a href="https://wa.me/${escapeHTML(x.phoneNumber.replace(/^0/,'62').replace(/[^0-9]/g,''))}" target="_blank" style="color:#16a34a;font-weight:bold">💬 WhatsApp</a>
+ </p>` : ""}
+ <p><b>Tanggal laporan:</b> ${escapeHTML(x.dateText || "-")}</p>
+ ${x.statusUpdatedBy ? `<p><b>Status terakhir diubah oleh:</b> ${escapeHTML(x.statusUpdatedBy)}</p>` : ""}
+ ${x.type === "hilang" ? `<button class="action action-found" onclick="setFound('${x.id}');closeDetail()">✅ KONFIRMASI DITEMUKAN</button>` : `<button class="action action-lost" onclick="setLost('${x.id}');closeDetail()">↩️ KEMBALIKAN KE HILANG</button>`}
+ `;
+ document.getElementById("detailModal").style.display = "flex";
+};
+
+window.closeDetail = function(){ document.getElementById("detailModal").style.display = "none"; };
+
+window.setFound = async function(id){
+ if(!confirm("Apakah barang ini benar-benar sudah ditemukan?")) return;
+ try {
+  await restUpdateDoc(`reports/${id}`, { type: "ditemukan", statusUpdatedBy: "Admin adeef" });
+  loadAdminReports();
+  alert("✅ Status berhasil diubah menjadi DITEMUKAN.");
+ } catch(e) {
+  alert("❌ Gagal mengupdate status: " + e.message);
+ }
+};
+
+window.setLost = async function(id){
+ if(!confirm("Ubah status barang kembali menjadi HILANG?")) return;
+ try {
+  await restUpdateDoc(`reports/${id}`, { type: "hilang", statusUpdatedBy: "Admin adeef" });
+  loadAdminReports();
+  alert("↩️ Status dikembalikan menjadi HILANG.");
+ } catch(e) {
+  alert("❌ Gagal mengupdate status: " + e.message);
+ }
+};
+
+window.deleteReport = async function(id){
+ if(!confirm("Yakin ingin menghapus laporan ini?")) return;
+ try {
+  await restDeleteDoc(`reports/${id}`);
+  loadAdminReports();
+  alert("🗑️ Laporan berhasil dihapus.");
+ } catch(e) {
+  alert("❌ Gagal menghapus laporan: " + e.message);
+ }
+};
+</script>
+
+</body>
+</html>
